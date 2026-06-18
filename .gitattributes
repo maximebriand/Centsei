@@ -1,0 +1,5 @@
+# Line-ending normalization — LF everywhere (cross-OS portability).
+* text=auto eol=lf
+
+# Shell scripts MUST stay in LF, otherwise they break on Unix.
+*.sh text eol=lf

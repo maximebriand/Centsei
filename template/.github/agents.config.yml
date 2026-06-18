@@ -1,0 +1,76 @@
+# ─────────────────────────────────────────────────────────────────
+# Centsei — per-team configuration
+#
+# This is THE ONLY file each team edits. The agents in
+# .github/agents/*.agent.md stay generic and reusable as-is.
+# ─────────────────────────────────────────────────────────────────
+
+team:
+  name: "my-team"
+  credits_monthly_per_user: 3900       # AI credits budget (Enterprise = 3900/user)
+  credits_alert_threshold: 0.80        # alert at 80% of budget
+
+defaults:
+  workflow: sdd                        # sdd | vibe
+  effort: medium                       # low | medium | high (prompt instruction, not native)
+  language: en                         # language of agent outputs
+
+# ── CUSTOM per team: describe your stack so the agents conform to it ──
+stack:
+  language: typescript                 # e.g.: typescript | python | go | java
+  framework: ""                        # e.g.: angular | react | nestjs | spring
+  test_runner: ""                      # e.g.: vitest | jest | pytest | go test
+  linter: ""                           # e.g.: eslint | ruff | golangci-lint
+  monorepo: ""                         # e.g.: nx | turbo | "" if none
+  conventions_file: "AGENTS.md"        # conventions file the agents read
+  specs_path: "openspec/changes"       # specs root (SDD flow), if applicable
+
+# ── Whitelist of allowed models (budget guardrail) ──
+# Remove models that are too expensive; uncomment Opus only for review.
+allowed_models:
+  - gpt-5.4-nano
+  - gpt-5-mini
+  - gpt-5.4-mini
+  - claude-haiku-4.5
+  - claude-sonnet-4.6
+  # - gpt-5.5
+  # - claude-opus-4.8
+
+# ── Deterministic layer: allowed shell tools (tools before tokens) ──
+tools:
+  allowed:
+    ripgrep: true                      # rg — text search
+    fd: true                           # fd — list files
+    ast_grep: false                    # sg — structural AST (install if wanted)
+    jq: true                           # transform JSON
+    git: true                          # git diff/log/grep (read)
+    sed_awk: true
+  # Cap on tool output injected into the model context, per agent (bytes)
+  max_output_bytes:
+    explorer: 8192
+    reviewer: 16384
+    implementer: 4096
+    centsei: 2048
+    spec-planner: 4096
+    vibe-coder: 4096
+    debugger: 8192
+    test-author: 4096
+    scribe: 4096
+  hard_limit_bytes: 32768              # beyond → truncate or split the task
+
+# ── Caveman hand-offs (glue scripts, zero model calls) ──
+caveman_scripts:
+  - name: prefilter-scope
+    path: .github/scripts/prefilter-scope.sh
+    trigger: before_implementer
+  - name: handoff-impl-to-reviewer
+    path: .github/scripts/handoff-impl-to-reviewer.sh
+    trigger: after_implementer
+
+# ── Opt-in add-ons (off the routing table until enabled) ──
+addons:
+  doc_writer:            # the `scribe` agent
+    enabled: false
+    mcp_outline_env: CENTSEI_MCP_OUTLINE_URL   # set this to enable Outline publishing
+  refactorer:
+    enabled: false
