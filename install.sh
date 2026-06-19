@@ -25,6 +25,23 @@ TARGET=""
 
 usage() { sed -n '2,16p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 0; }
 
+# ── Prerequisite helpers ──
+detect_pkg_mgr() {
+  if command -v brew    >/dev/null 2>&1; then echo brew
+  elif command -v apt-get >/dev/null 2>&1; then echo apt
+  elif command -v dnf   >/dev/null 2>&1; then echo dnf
+  elif command -v pacman >/dev/null 2>&1; then echo pacman
+  else echo unknown; fi
+}
+pkg_name() {  # pkg_name <mgr> <tool> → package name for that manager
+  case "$2:$1" in
+    rg:*)          echo ripgrep ;;
+    fd:apt|fd:dnf) echo fd-find ;;
+    fd:*)          echo fd ;;
+    *)             echo "$2" ;;
+  esac
+}
+
 for arg in "$@"; do
   case "$arg" in
     --help|-h) usage ;;
@@ -44,6 +61,36 @@ echo "Centsei v$VERSION — master the art of credits"
 echo "  source: $TEMPLATE_DIR"
 echo "  target: $TARGET/.github/"
 [ "$DRY_RUN" -eq 1 ] && echo "  mode  : DRY-RUN (no writes)"
+echo
+
+# ── Check prerequisites (tools the agents rely on at runtime) ──
+echo "Prerequisites:"
+missing=""
+for t in rg fd jq git; do
+  if command -v "$t" >/dev/null 2>&1; then
+    echo "  ✓ $t"
+  else
+    echo "  ✗ $t  (required — missing)"
+    missing="$missing $t"
+  fi
+done
+command -v sg      >/dev/null 2>&1 && echo "  ✓ sg (ast-grep, optional)"  || echo "  • sg (ast-grep, optional — structural search off)"
+command -v copilot >/dev/null 2>&1 && echo "  ✓ copilot CLI"              || echo "  • copilot CLI not found — install it to run /agent centsei"
+if [ -n "$missing" ]; then
+  mgr=$(detect_pkg_mgr)
+  pkgs=""
+  for t in $missing; do pkgs="$pkgs $(pkg_name "$mgr" "$t")"; done
+  echo
+  echo "  ⚠ Install the missing required tools:"
+  case "$mgr" in
+    brew)   echo "      brew install$pkgs" ;;
+    apt)    echo "      sudo apt-get install -y$pkgs"
+            echo "      (Debian/Ubuntu: the 'fd' binary is 'fdfind' from the fd-find package)" ;;
+    dnf)    echo "      sudo dnf install -y$pkgs" ;;
+    pacman) echo "      sudo pacman -S$pkgs" ;;
+    *)      echo "      via your package manager:$pkgs" ;;
+  esac
+fi
 echo
 
 # ── Back up agents.config.yml if it already exists (it gets overwritten) ──
@@ -104,7 +151,7 @@ echo
 echo "✓ Installed."
 echo
 echo "Next steps:"
+[ -n "$missing" ] && echo "  0. Install the missing prerequisites shown above"
 echo "  1. Edit   $TARGET/.github/agents.config.yml  (stack, budget, allowed models)"
-echo "  2. Check that ripgrep (rg), fd and jq are installed on the machine/runner"
-echo "  3. Launch Copilot CLI in the repo:  copilot  then  /agent centsei"
-echo "  4. Usage details: see the framework's README.md"
+echo "  2. Launch Copilot CLI in the repo:  copilot  then  /agent centsei"
+echo "  3. Usage details: see the framework's README.md"
