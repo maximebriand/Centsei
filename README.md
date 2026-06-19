@@ -34,10 +34,11 @@ but **"what volume of tokens, on which model"**. This framework exploits that:
 /path/to/centsei/install.sh --dry-run /path/to/my-repo
 ```
 
-The installer copies `template/.github/` (agents, scripts, config, `centsei-instructions.md`)
-into the target repo and makes the scripts executable. It is **non-destructive**: it never
-overwrites your `copilot-instructions.md` — it only adds a one-time reference to
-`centsei-instructions.md` (and creates `copilot-instructions.md` if it doesn't exist).
+The installer copies `template/.github/` (agents, scripts, `centsei-instructions.md`) into
+the target repo and makes the scripts executable. It is **non-destructive & update-safe**:
+it never overwrites your `copilot-instructions.md` (only adds a one-time reference) nor your
+`agents.config.yml` (created once, preserved on every re-run); the Centsei-owned files are
+refreshed.
 
 **Prerequisites on the machine / runner:** `ripgrep` (rg), `fd`, `jq`, `git`.
 Optional: `ast-grep` (sg) for structural search.
@@ -47,6 +48,20 @@ Optional: `ast-grep` (sg) for structural search.
 1. Edit `.github/agents.config.yml` → your stack, your budget, the model whitelist.
 2. Launch Copilot CLI in the repo, then `/agent centsei`.
 3. Centsei routes, delegates, aggregates — you only interact with it.
+
+## Updating
+
+Centsei lives in its own repo, so updating is two steps:
+
+```bash
+cd /path/to/centsei && git pull                   # get the latest framework
+/path/to/centsei/install.sh /path/to/your-repo    # redeploy (update-safe)
+```
+
+Re-running the installer **refreshes** the Centsei-owned files (agents, scripts,
+`centsei-instructions.md`) and **preserves** your `agents.config.yml` and your
+`copilot-instructions.md`. If an update adds new config options, the installer points you
+to the template so you can diff and copy what you want.
 
 ## The roster
 

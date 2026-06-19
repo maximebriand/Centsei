@@ -11,8 +11,10 @@
 #   ./install.sh --dry-run       # shows what would be done, without writing
 #   ./install.sh --help
 #
-# Non-destructive: never overwrites copilot-instructions.md — it only adds a
-# one-time reference to .github/centsei-instructions.md (creating the file if absent).
+# Non-destructive & update-safe — never overwrites your files:
+#   - copilot-instructions.md: only a one-time Centsei reference is added;
+#   - agents.config.yml: created on first install, preserved on every re-run;
+#   - agents, scripts and centsei-instructions.md are refreshed (Centsei-owned).
 # ─────────────────────────────────────────────────────────────────
 set -euo pipefail
 
@@ -23,7 +25,7 @@ VERSION="$(cat "$SCRIPT_DIR/VERSION" 2>/dev/null || echo "dev")"
 DRY_RUN=0
 TARGET=""
 
-usage() { sed -n '2,16p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 0; }
+usage() { sed -n '2,18p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 0; }
 
 # ── Prerequisite helpers ──
 detect_pkg_mgr() {
@@ -93,14 +95,8 @@ if [ -n "$missing" ]; then
 fi
 echo
 
-# ── Back up agents.config.yml if it already exists (it gets overwritten) ──
-EXISTING_CFG="$TARGET/.github/agents.config.yml"
-if [ -f "$EXISTING_CFG" ] && [ "$DRY_RUN" -eq 0 ]; then
-  cp "$EXISTING_CFG" "$EXISTING_CFG.bak.$(date +%Y%m%d%H%M%S)"
-  echo "↳ Backed up existing agents.config.yml"
-fi
-
-# ── Copy template files (agents, config, scripts, centsei-instructions.md) ──
+# ── Copy Centsei-owned files (agents, scripts, centsei-instructions.md) ──
+# agents.config.yml is YOUR file → handled separately below (never clobbered).
 copy() {
   local src="$1" dst="$2"
   echo "  + $dst"
@@ -111,8 +107,22 @@ copy() {
 }
 while IFS= read -r -d '' f; do
   rel="${f#"$TEMPLATE_DIR"/}"
+  [ "$rel" = ".github/agents.config.yml" ] && continue   # user file — handled below
   copy "$f" "$TARGET/$rel"
 done < <(find "$TEMPLATE_DIR" -type f -print0)
+
+# ── agents.config.yml: create on first install, PRESERVE on update ──
+CFG="$TARGET/.github/agents.config.yml"
+if [ -f "$CFG" ]; then
+  echo "  = $CFG (kept your config — update preserves it)"
+  echo "    new options? diff against $TEMPLATE_DIR/.github/agents.config.yml"
+else
+  echo "  + $CFG (created — edit it for your stack)"
+  if [ "$DRY_RUN" -eq 0 ]; then
+    mkdir -p "$(dirname "$CFG")"
+    cp "$TEMPLATE_DIR/.github/agents.config.yml" "$CFG"
+  fi
+fi
 
 # ── Execute permissions on the caveman scripts ──
 if [ "$DRY_RUN" -eq 0 ]; then
