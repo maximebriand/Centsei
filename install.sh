@@ -2,15 +2,17 @@
 # ─────────────────────────────────────────────────────────────────
 # Centsei — installer
 #
-# Deploys the framework (agents, caveman scripts, config) into a target repo.
+# Deploys the framework (agents, caveman scripts, config, Centsei rules)
+# into a target repo.
 #
 # Usage:
 #   ./install.sh                 # installs into the current repo
 #   ./install.sh /path/repo      # installs into a specific repo
-#   ./install.sh --dry-run       # shows what would be done, without writing anything
+#   ./install.sh --dry-run       # shows what would be done, without writing
 #   ./install.sh --help
 #
-# Idempotent: backs up any existing config before overwriting.
+# Non-destructive: never overwrites copilot-instructions.md — it only adds a
+# one-time reference to .github/centsei-instructions.md (creating the file if absent).
 # ─────────────────────────────────────────────────────────────────
 set -euo pipefail
 
@@ -21,7 +23,7 @@ VERSION="$(cat "$SCRIPT_DIR/VERSION" 2>/dev/null || echo "dev")"
 DRY_RUN=0
 TARGET=""
 
-usage() { sed -n '2,18p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 0; }
+usage() { sed -n '2,16p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 0; }
 
 for arg in "$@"; do
   case "$arg" in
@@ -44,17 +46,14 @@ echo "  target: $TARGET/.github/"
 [ "$DRY_RUN" -eq 1 ] && echo "  mode  : DRY-RUN (no writes)"
 echo
 
-# ── Backup of existing files that would be overwritten ──
-for rel in agents.config.yml copilot-instructions.md; do
-  EXISTING="$TARGET/.github/$rel"
-  if [ -f "$EXISTING" ] && [ "$DRY_RUN" -eq 0 ]; then
-    BACKUP="$EXISTING.bak.$(date +%Y%m%d%H%M%S)"
-    cp "$EXISTING" "$BACKUP"
-    echo "↳ Existing file backed up: $BACKUP"
-  fi
-done
+# ── Back up agents.config.yml if it already exists (it gets overwritten) ──
+EXISTING_CFG="$TARGET/.github/agents.config.yml"
+if [ -f "$EXISTING_CFG" ] && [ "$DRY_RUN" -eq 0 ]; then
+  cp "$EXISTING_CFG" "$EXISTING_CFG.bak.$(date +%Y%m%d%H%M%S)"
+  echo "↳ Backed up existing agents.config.yml"
+fi
 
-# ── Copy ──
+# ── Copy template files (agents, config, scripts, centsei-instructions.md) ──
 copy() {
   local src="$1" dst="$2"
   echo "  + $dst"
@@ -63,7 +62,6 @@ copy() {
     cp "$src" "$dst"
   fi
 }
-
 while IFS= read -r -d '' f; do
   rel="${f#"$TEMPLATE_DIR"/}"
   copy "$f" "$TARGET/$rel"
@@ -72,6 +70,34 @@ done < <(find "$TEMPLATE_DIR" -type f -print0)
 # ── Execute permissions on the caveman scripts ──
 if [ "$DRY_RUN" -eq 0 ]; then
   chmod +x "$TARGET"/.github/scripts/*.sh 2>/dev/null || true
+fi
+
+# ── Reference Centsei from copilot-instructions.md (idempotent, non-destructive) ──
+CI="$TARGET/.github/copilot-instructions.md"
+REF_SENTINEL='<!-- centsei:ref -->'
+print_ref() {
+  cat <<'REF'
+
+<!-- centsei:ref -->
+> **Centsei orchestration** — this repo is tooled by Centsei (github.com/maximebriand/Centsei).
+> See [`.github/centsei-instructions.md`](centsei-instructions.md) for the credit-frugal
+> multi-agent rules. Entry point: `/agent centsei`. Config: `.github/agents.config.yml`.
+REF
+}
+if [ ! -f "$CI" ]; then
+  echo "  + $CI (created with Centsei reference)"
+  if [ "$DRY_RUN" -eq 0 ]; then
+    mkdir -p "$(dirname "$CI")"
+    { printf '# Copilot instructions\n'; print_ref; } > "$CI"
+  fi
+elif grep -qF "$REF_SENTINEL" "$CI"; then
+  echo "  = $CI (Centsei reference already present)"
+else
+  echo "  ~ $CI (Centsei reference appended — your content preserved)"
+  if [ "$DRY_RUN" -eq 0 ]; then
+    cp "$CI" "$CI.bak.$(date +%Y%m%d%H%M%S)"
+    print_ref >> "$CI"
+  fi
 fi
 
 echo

@@ -34,8 +34,10 @@ but **"what volume of tokens, on which model"**. This framework exploits that:
 /path/to/centsei/install.sh --dry-run /path/to/my-repo
 ```
 
-The installer copies `template/.github/` (agents, scripts, config) into the target
-repo, backs up any existing config, and makes the scripts executable.
+The installer copies `template/.github/` (agents, scripts, config, `centsei-instructions.md`)
+into the target repo and makes the scripts executable. It is **non-destructive**: it never
+overwrites your `copilot-instructions.md` — it only adds a one-time reference to
+`centsei-instructions.md` (and creates `copilot-instructions.md` if it doesn't exist).
 
 **Prerequisites on the machine / runner:** `ripgrep` (rg), `fd`, `jq`, `git`.
 Optional: `ast-grep` (sg) for structural search.
@@ -82,7 +84,7 @@ centsei/
 ├── VERSION
 ├── template/                   # what gets deployed into a repo
 │   └── .github/
-│       ├── copilot-instructions.md  # global Centsei rules (generic)
+│       ├── centsei-instructions.md   # Centsei rules (referenced from copilot-instructions.md)
 │       ├── agents/*.agent.md         # the core agents (+ opt-in add-ons)
 │       ├── agents.config.yml         # the ONLY file each team edits
 │       └── scripts/*.sh              # caveman hand-offs
