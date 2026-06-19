@@ -4,9 +4,7 @@ description: >
   Reviews a diff produced by the implementer. Checks consistency with the plan and
   the conventions. Points out discrepancies, does not rewrite the code. Heavy reading,
   light output → a cheap model is enough.
-model:
-  - gpt-5.4-nano      # input heavy / light output → nano is enough
-  - gpt-5-mini        # fallback
+model: gpt-5.4-nano
 tools: [bash, view]
 user-invocable: true   # can be invoked manually on a PR
 ---

@@ -4,9 +4,7 @@ description: >
   "Vibe coding" flow: rapid iteration on an idea without a formal spec, for
   prototypes and explorations. Constrained budget, speed > depth. Explicitly
   marks the technical debt introduced.
-model:
-  - gpt-5.4-mini      # speed, contained cost
-  - gpt-5-mini        # fallback
+model: gpt-5.4-mini
 tools: [bash, view, edit]
 user-invocable: true
 ---

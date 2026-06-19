@@ -23,7 +23,8 @@ everything pollutes the same context.
 
 Copilot natively supports sub-agents:
 - definition via a `.github/agents/<name>.agent.md` file;
-- `model` frontmatter (a single name **or a prioritized list** with fallback);
+- `model` frontmatter — **a single model name (string)**. The Copilot CLI rejects a
+  YAML list/prioritized-fallback, so each agent pins exactly one model;
 - the **`bash`** tool → shell execution (ripgrep, git, fd, jq) — hence the deterministic layer;
 - isolated context per sub-agent, parallel execution, agent-initiated delegation.
 

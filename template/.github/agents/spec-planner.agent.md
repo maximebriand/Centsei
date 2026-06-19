@@ -4,9 +4,7 @@ description: >
   Spec-Driven Development (SDD / OpenSpec) flow. Writes or updates a functional
   and technical spec BEFORE any code, and a numbered task plan that a human can
   validate. Does not generate code.
-model:
-  - claude-sonnet-4.6   # structured reasoning, polished markdown
-  - gpt-5.4             # fallback
+model: claude-sonnet-4.6
 tools: [bash, view, edit]
 user-invocable: true
 ---

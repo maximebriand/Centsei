@@ -3,9 +3,7 @@ name: implementer
 description: >
   Writes or modifies code from a validated plan. Produces readable diffs
   and a compact summary. Takes no initiative outside the assigned scope.
-model:
-  - claude-sonnet-4.6   # good quality/cost balance for generation
-  - gpt-5.4             # mid-range fallback
+model: claude-sonnet-4.6
 tools: [bash, view, edit]
 user-invocable: false
 ---

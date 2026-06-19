@@ -4,9 +4,7 @@ description: >
   Writes or extends automated tests for a change. Separate from the implementer so
   test framing isn't biased by implementation details. Cheap models handle the
   structure — but edge-case coverage is mandatory, not just the happy path.
-model:
-  - claude-sonnet-4.6  # test quality gates the pipeline — don't skimp here
-  - gpt-5.4            # fallback
+model: claude-sonnet-4.6
 tools: [bash, view, edit]
 user-invocable: false
 ---

@@ -5,17 +5,8 @@ description: >
   pre-digested summary — never reads raw source. Optionally publishes to a wiki
   (e.g. Outline) via an OPTIONAL MCP server; falls back to local files if absent.
   Opt-in add-on: off the default routing table until enabled in agents.config.yml.
-model:
-  - claude-haiku-4.5  # structured writing, not heavy reasoning → cheap
-  - gpt-5.4-nano      # fallback
+model: claude-haiku-4.5
 tools: [bash, view, edit]
-# Optional MCP — active only if the team configures it (capability detection).
-# If CENTSEI_MCP_OUTLINE_URL is unset, scribe writes locally and reports dry_run.
-mcp-servers:
-  outline:
-    required: false
-    env: CENTSEI_MCP_OUTLINE_URL
-    tools: [outline_create_document, outline_update_document]
 user-invocable: true
 ---
 
@@ -30,9 +21,11 @@ ADRs, wiki pages. You never read source code — you receive a compact summary
 1. Template-first: read the relevant template (ADR, changelog entry) and fill the
    slots. No blank-page generation.
 2. Write the document locally (e.g. `docs/adr/NNNN-*.md`).
-3. **Publish only if the wiki capability is present:** if `CENTSEI_MCP_OUTLINE_URL`
-   is set, call the Outline MCP tool; otherwise stop at the local file and report
-   `status: dry_run`. No error, no fallback noise.
+3. **Publish only if the wiki capability is present:** Outline publishing requires
+   an Outline MCP server configured at the project/CLI level via the
+   `CENTSEI_MCP_OUTLINE_URL` env var. If that server is configured, call the Outline
+   MCP tool; otherwise stop at the local file and report `status: dry_run`. No error,
+   no fallback noise.
 
 # Cost rules
 

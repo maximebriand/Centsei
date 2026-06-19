@@ -5,9 +5,7 @@ description: >
   right agent and the right model, aggregates compact summaries. Never reads the
   source code itself: it delegates. Top priority: minimize AI credit
   consumption.
-model:
-  - gpt-5-mini        # priority 1 — sufficient judgment, marginal cost
-  - gpt-5.4-mini      # fallback
+model: gpt-5-mini
 tools: [bash, view, agent]
 user-invocable: true
 ---

@@ -4,9 +4,7 @@ description: >
   Triages a failure (stack trace, CI log, failing test) and locates the root cause.
   Reads-then-reasons; does not write the fix. Hands a minimal repro + suspected cause
   to the implementer. Deterministic-first: reruns the test, greps the logs.
-model:
-  - gpt-5.4-nano       # most triage is mechanical → cheapest
-  - claude-sonnet-4.6  # escalation when the root cause is unclear
+model: gpt-5.4-nano
 tools: [bash, view]
 user-invocable: true
 ---
@@ -34,7 +32,8 @@ rg -n --max-count 1 'functionThatThrew' src/
 # Cost rules (non-negotiable)
 
 1. **Budget: 2–3 tool calls before escalating.** If the cause is still unclear after
-   rerun + locate, escalate to the `claude-sonnet-4.6` fallback — do NOT loop on nano.
+   rerun + locate, hand back to Centsei to re-route to a stronger model
+   (e.g. `claude-sonnet-4.6`) — do NOT loop on nano.
 2. Never read whole files: grep to the failing line, read only its surroundings.
 3. You do not write the fix. Output a repro + suspected cause; the implementer fixes.
 

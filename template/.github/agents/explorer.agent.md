@@ -4,9 +4,7 @@ description: >
   Maps the repo. Locates symbols, files, usages, dependencies.
   Does not reason, does not generate code: it COLLECTS via deterministic
   tools and returns a compact contract. It's the cheapest agent.
-model:
-  - gpt-5.4-nano      # read-only — as cheap as possible
-  - gpt-5-mini        # fallback
+model: gpt-5.4-nano
 tools: [bash, view]
 user-invocable: false
 ---
